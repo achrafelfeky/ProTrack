@@ -3,7 +3,9 @@ from .models import ActivityLog
 from users.serializers import UserSerializer
 from projects.serializers import ProjectSerializer
 
+
 class ActivityLogSerializer(serializers.ModelSerializer):
+    
     user = UserSerializer(read_only=True)
     project = ProjectSerializer(read_only=True)
 

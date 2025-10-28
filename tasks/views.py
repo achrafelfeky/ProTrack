@@ -3,13 +3,20 @@ from rest_framework import status
 from .models import Task
 from rest_framework import viewsets
 from activitylog.views import ActivityLogMixin
-from users.views import AdminManagerOrAssignedStatusOnlyMixin,AdminAndManagerMixin
+from users.views import AdminAndManagerMixin
 from notifications.models import Notification
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.core.cache import cache
+from drf_spectacular.utils import extend_schema
+
 
 # Tasks ------> User/ Users
+@extend_schema(tags=["Tasks"])
 class TasksProject(AdminAndManagerMixin, ActivityLogMixin, viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+   
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
 
@@ -23,6 +30,16 @@ class TasksProject(AdminAndManagerMixin, ActivityLogMixin, viewsets.ModelViewSet
                 title="مهمة جديدة",
                 message=f"تم تعيين مهمة جديدة لك: {task.title}"
             )
+      # Add Cache
+    def list(self, request, *args, **kwargs):
+        data = cache.get('all_tasks') 
+        if not data:
+            data = TaskSerializer(self.get_queryset(), many=True).data
+            cache.set('all_tasks', data, timeout=60*5)  
+            print(" Loaded from DB")
+        else:
+            print(" Loaded from Cache")
+        return Response(data)      
 
 
     def perform_update(self, serializer):
@@ -39,7 +56,9 @@ class TasksProject(AdminAndManagerMixin, ActivityLogMixin, viewsets.ModelViewSet
             )
 
 # Submit Task For Approval ------------> Manager
+@extend_schema(tags=["Submit"])
 class SubmitTaskForApproval(APIView, ActivityLogMixin):
+   permission_classes = [IsAuthenticated]
    def post(self, request, pk):
       task = Task.objects.get(pk=pk)
 
@@ -54,7 +73,7 @@ class SubmitTaskForApproval(APIView, ActivityLogMixin):
       
       
       
-      task.status = 'Pending Approval'
+      task.status = "pending_approval"
       task.save()
 
       Notification.objects.create(
@@ -65,11 +84,15 @@ class SubmitTaskForApproval(APIView, ActivityLogMixin):
       return Response({"message": "تم إرسال المهمة للمراجعة بنجاح"})
 
 # Approve Task ------------> Manager -------------> True 
+@extend_schema(tags=["Approve"])
 class ApproveTask(APIView, ActivityLogMixin):
+ 
+   permission_classes = [IsAuthenticated]
    def post(self, request, pk):
       task = Task.objects.get(pk=pk)
 
-      if request.user != task.created_by:
+      # if request.user != task.created_by:
+      if request.user != task.created_by and request.user.role != "admin":   
          return Response({"error": "غير مصرح لك بقبول هذه المهمه"}, status=status.HTTP_403_FORBIDDEN)
       
 
@@ -89,11 +112,15 @@ class ApproveTask(APIView, ActivityLogMixin):
       return Response({"message": "تمت الموافقة على المهمة"})
    
 # Reject Task ------------> Manager -----------> False
+@extend_schema(tags=["Reject"])
 class RejectTask(APIView, ActivityLogMixin):
+   permission_classes = [IsAuthenticated]
+
    def post(self, request, pk):
       task = Task.objects.get(pk=pk)
 
-      if request.user != task.created_by:
+      # if request.user != task.created_by:
+      if request.user != task.created_by and request.user.role != "admin":   
          return Response({"error": "غير مصرح لك برفض هذه المهمه"}, status=status.HTTP_403_FORBIDDEN)
       
       if task.normal_status == 'done' and task.status == 'rejected':
@@ -112,12 +139,14 @@ class RejectTask(APIView, ActivityLogMixin):
       return Response({"message": "تم رفض المهمة"})
 
 # Return Task --------------> Manager ------------> User
+@extend_schema(tags=["Return"])
 class ReturnTask(APIView, ActivityLogMixin):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
         task = Task.objects.get(pk=pk)
-
-        if request.user != task.created_by :
+        if request.user != task.created_by and request.user.role != "admin":
+      #   if request.user != task.created_by :
             return Response({"error": "غير مصرح لك بإرجاع المهمة"}, status=status.HTTP_403_FORBIDDEN)
 
         task.status = "returned"

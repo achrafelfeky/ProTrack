@@ -1,10 +1,14 @@
 from .serializers import ActivityLogSerializer
-from rest_framework import status
 from .models import ActivityLog
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import extend_schema
 
 
+
+@extend_schema(tags=["AuditLog"])
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = ActivityLog.objects.all()
     serializer_class = ActivityLogSerializer
 
@@ -20,14 +24,8 @@ class ActivityLogger:
             action=action,
         )
 
-
-
-
+# بيسجل كل العمليات اللي انت محتاجها تتسجل 
 class ActivityLogMixin:
-    """
-    Mixin يقوم بتسجيل كل العمليات (إنشاء - تعديل - حذف)
-    لأي ModelViewSet يرث منه.
-    """
     def perform_create(self, serializer):
         instance = serializer.save()
         ActivityLogger.log(

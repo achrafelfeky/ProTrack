@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
 
     'users',
     'projects',
@@ -47,16 +48,31 @@ INSTALLED_APPS = [
     'comments',
     'activitylog',
     'notifications',
+    'drf_spectacular',
+    'drf_spectacular_sidecar',
+    'dashboard.apps.DashboardConfig',
+
+
 ]
+
+
 AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+
+   
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-
+SPECTACULAR_SETTINGS = {
+    'TITLE': '📘 إدارة المشاريع - Project Management API',
+    'DESCRIPTION': 'نظام إدارة مشاريع كامل يحتوي على مستخدمين ومهام وسجلات وإشعارات.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -142,88 +158,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 
-
-# # Redis --------------> إعدادات Celery
-# CELERY_BROKER_URL = 'redis://localhost:6379/0'
-# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-# CELERY_ACCEPT_CONTENT = ['json']
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_SERIALIZER = 'json'
-# CELERY_TIMEZONE = 'Africa/Cairo'
-
-
-# # from celery.schedules import crontab
-# # #, hour='*'
-# # CELERY_BEAT_SCHEDULE = {
-# #     'check-expired-projects-every-hour': {
-# #         'task': 'projects.tasks.check_expired_projects',
-# #         'schedule': crontab(minute=1), 
-# #     },
-# #     'check-upcoming-tasks-every-15-mins': {
-# #         'task': 'projects.tasks.check_upcoming_tasks',
-# #         'schedule': crontab(minute='*/15'),  
-# #     },
-# #     'check-expired-tasks-every-30-mins': {
-# #         'task': 'projects.tasks.check_expired_tasks',
-# #         'schedule': crontab(minute='*/30'), 
-# #     },
-# # }
-
-# # =============== Celery & Redis Settings ===============
-
-# # Broker (Redis)
-# CELERY_BROKER_URL = 'redis://localhost:6379/0'
-# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-
-# # تنسيق الوقت
-# CELERY_TIMEZONE = 'Africa/Cairo'
-# CELERY_ENABLE_UTC = False
-
-# # عدد مرات إعادة المحاولة إذا فشل
-# CELERY_ACKS_LATE = True
-# CELERY_TASK_REJECT_ON_WORKER_LOST = True
-
-# # سجل النشاط
-# CELERY_TASK_TRACK_STARTED = True
-# CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 دقيقة كحد أقصى
-
-# Redis
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
-
-# تنسيق الوقت
-CELERY_TIMEZONE = 'Africa/Cairo'
-CELERY_ENABLE_UTC = False
-
-# الأمان والمهام
-CELERY_ACKS_LATE = True
-CELERY_TASK_REJECT_ON_WORKER_LOST = True
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 دقيقة كحد أقصى
-
-# جدولة المهام (Beat)
-from celery.schedules import crontab
-
-CELERY_BEAT_SCHEDULE = {
-    'check-expired-projects-every-hour': {
-        'task': 'projects.tasks.check_expired_projects',
-        'schedule': crontab(minute=1), 
-    },
-    'check-upcoming-tasks-every-15-mins': {
-        'task': 'projects.tasks.check_upcoming_tasks',
-        'schedule': crontab(minute='*/15'),  
-    },
-    'check-expired-tasks-every-30-mins': {
-        'task': 'projects.tasks.check_expired_tasks',
-        'schedule': crontab(minute='*/30'), 
-    },
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1", 
+    }
 }
-

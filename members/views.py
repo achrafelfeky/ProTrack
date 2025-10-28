@@ -4,11 +4,18 @@ from .models import ProjectMember
 from rest_framework import viewsets
 from users.views import AdminOnlyMixin
 from notifications.models import Notification
-from projects.models import Project
 from users.models import User
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.core.cache import cache
+from drf_spectacular.utils import extend_schema
 
 
-class ProjectMemberViewSet(AdminOnlyMixin, viewsets.ModelViewSet):
+
+
+@extend_schema(tags=["Project Member"])
+class ProjectMemberViewSet( AdminOnlyMixin, viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = ProjectMember.objects.all()
     serializer_class = ProjectMemberSerializer
 
@@ -23,5 +30,15 @@ class ProjectMemberViewSet(AdminOnlyMixin, viewsets.ModelViewSet):
             title="تمت إضافتك إلى المشروع",
             message=f"تمت إضافتك كـ {project_member.role} في المشروع '{project_member.project.name}'"
         )
+    # Add Cache
+    def list(self, request, *args, **kwargs):
+        data = cache.get('all_members') 
+        if not data:
+            data = ProjectMemberSerializer(self.get_queryset(), many=True).data
+            cache.set('all_members', data, timeout=60*5)  
+            print("📦 Loaded from DB")
+        else:
+            print("⚡ Loaded from Cache")
+        return Response(data)
 
 

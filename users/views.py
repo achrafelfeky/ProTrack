@@ -4,12 +4,18 @@ from .models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from activitylog.views import ActivityLogger
 from rest_framework.exceptions import PermissionDenied
 from tasks.models import Task
+from django.core.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import extend_schema
+
+
 
 # Create User
+@extend_schema(tags=["Register"])
 class RegisterUser(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -33,6 +39,7 @@ class RegisterUser(APIView):
         return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 # Login User -------> Create Refresh and Access Tokens
+@extend_schema(tags=["Login"])
 class LoginUser(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -58,7 +65,9 @@ class LoginUser(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Get All Users
+@extend_schema(tags=[" Users"])
 class GetUsers(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
@@ -110,10 +119,8 @@ class CommentPermissionMixin:
     def check_comment_permission(self, obj, method):
         user = self.request.user
 
-
         if user.role in ['admin', 'manager']:
             return True
-
 
         if method in ['PUT', 'PATCH', 'DELETE']:
             if obj.user != user:
@@ -155,10 +162,44 @@ class AdminAndManagerMixin:
 
         if not user.is_authenticated:
             raise PermissionDenied("سجل دخول من فضلك")
-        
-        if user.role != 'admin':
-            raise PermissionDenied("غير مسموح لك")
-        
-        # if user != Task.created_by:
-        #     raise PermissionDenied("غير مسموح لك ")
 
+
+        if user.role not in ['admin', 'manager']:
+            raise PermissionDenied("غير مسموح لك بالدخول")
+
+# Refresh Token
+@extend_schema(tags=["Refresh Token"])
+class RefreshTokenView(APIView):
+    def post(self, request):
+        refresh_token = request.data.get("refresh")
+
+        if not refresh_token:
+            return Response({"detail": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            new_access_token = str(refresh.access_token)
+            return Response({
+                "access": new_access_token
+            }, status=status.HTTP_200_OK)
+        except TokenError:
+            return Response({"detail": "Invalid or expired refresh token."}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+# Logout ------------------> Blacklist
+@extend_schema(tags=["Logout"])
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        refresh_token = request.data.get("refresh")
+
+        if not refresh_token:
+            return Response({"detail": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()  
+            return Response({"detail": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)
+        except TokenError:
+            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)

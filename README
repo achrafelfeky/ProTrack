@@ -1,0 +1,87 @@
+# 🧩 Project Management & Task Tracking API
+
+This project is built using **Django REST Framework (DRF)**.  
+It provides a complete backend system for managing projects, tasks, and members — with **role-based access**, **notifications**, and **full caching** for optimized performance.
+
+---
+
+## 🚀 Features
+
+1. 👥 **Role-Based Members** — Each project can have members with different roles (Manager, Member, Admin).  
+2. 📝 **Task Assignment** — Tasks can be assigned to one or multiple users.  
+3. 🔒 **Role Permissions** —  
+   - **Managers** can create and track tasks, assign members, and update task status.  
+   - **Members** can only view and comment on their assigned tasks.  
+4. 🔔 **Smart Notifications** —  
+   - When a user is added to a project.  
+   - When assigned a new task.  
+   - When a deadline is approaching.  
+   - When a task or project is marked as **Done**.  
+5. 💬 **Task Comments** — Each user can comment only on their assigned tasks.  
+6. 🧪 **Full Testing Coverage** — Unit tests for all main functionalities.  
+7. 📊 **Dashboards** —  
+   - Admin & Manager: view all assigned and created tasks.  
+   - Regular users: view only their own tasks.  
+8. ⏳ **Task Review Flow** — Tasks go through status changes:  
+   *Pending → In Progress → Review → Done*  
+   The manager or owner can accept, reject, or request edits before marking as **Done**.  
+9. ⚡ **Advanced Caching System (NEW)** —  
+   - Implemented **caching for all API endpoints** (projects, tasks, members, dashboards, etc.).  
+   - Uses **Django Cache Framework** (can be backed by Redis or memory cache).  
+   - Greatly improves performance and reduces database load.  
+   - Automatic cache invalidation when data changes (create/update/delete).  
+
+---
+
+## ⚙️ Installation & Run
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/YourUsername/Project-Management-API.git
+   cd Project-Management-API
+   ```
+
+2. **Create and activate a virtual environment**
+   ```bash
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
+
+   # Linux / Mac
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Run migrations**
+   ```bash
+   python manage.py migrate
+   ```
+
+5. **Run the development server**
+   ```bash
+   python manage.py runserver
+   ```
+
+---
+
+## 🧠 Tech Stack
+
+- **Django & Django REST Framework (DRF)**
+- **SQLite** (or any preferred database)
+- **JWT Authentication**
+- **Celery / Django Signals** (for async notifications)
+- **Django Cache Framework (Redis / LocMemCache)** 
+- **pytest / Django Tests**
+- **Custom Logging & Permissions System**
+
+---
+
+## 🎯 Project Goal
+
+To simulate a real-world **project management system**,  
+demonstrating **role-based access control**, **task tracking**, **notifications**,  
+and now **high-speed caching performance** — inspired by tools like **Jira** and **Trello**.
