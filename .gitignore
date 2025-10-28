@@ -18,6 +18,10 @@ instance/
 media/
 staticfiles/
 
+#  Django Migrations (ignore all except __init__.py)
+**/migrations/*
+!**/migrations/__init__.py
+
 #  Environment & Secrets
 .env
 *.env
@@ -47,3 +51,11 @@ dist/
 #  Cache
 cache/
 *.cache
+
+#  Celery files
+celerybeat-schedule
+celerybeat.pid
+*.pid
+celery_logs/
+celerybeat.log
+celery.log
