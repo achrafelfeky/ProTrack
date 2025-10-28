@@ -54,6 +54,8 @@ cache/
 
 #  Celery files
 celerybeat-schedule
+celerybeat-schedule-shm
+celerybeat-schedule-wal
 celerybeat.pid
 *.pid
 celery_logs/
