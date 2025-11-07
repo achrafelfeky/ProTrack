@@ -77,6 +77,7 @@ It provides a complete backend system for managing projects, tasks, and members 
 - **Django Cache Framework (Redis / LocMemCache)** 
 - **pytest / Django Tests**
 - **Custom Logging & Permissions System**
+- **Docker**
 
 ---
 
